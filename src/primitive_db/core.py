@@ -2,32 +2,13 @@ import os
 
 from prettytable import PrettyTable
 
+from .constants import SUPPORTED_TYPES
+from .decorators import confirm_action, handle_db_errors, log_time
+from .parser import parse_value
 from .utils import BASE_DIR
 
-SUPPORTED_TYPES = {"int", "str", "bool"}
 
-
-def parse_value(raw_value, expected_type):
-    value = raw_value.strip()
-
-    if expected_type == "str":
-        return value.strip('"')
-
-    if expected_type == "int":
-        try:
-            return int(value)
-        except ValueError:
-            raise ValueError(f"Некорректное целое число: {value}")
-
-    if expected_type == "bool":
-        lowered = value.lower()
-        if lowered in ("true", "false"):
-            return lowered == "true"
-        raise ValueError(f"Некорректное булево значение: {value}")
-
-    raise ValueError(f"Тип {expected_type} не поддерживается")
-
-
+@handle_db_errors
 def create_table(metadata, table_name, columns):
     if table_name in metadata:
         print(f'Ошибка: Таблица "{table_name}" уже существует.')
@@ -66,6 +47,8 @@ def list_tables(metadata):
         print(f"- {table}")
 
 
+@confirm_action("удаление таблицы")
+@handle_db_errors
 def drop_table(metadata, table_name):
     if table_name not in metadata:
         print(f'Ошибка: Таблица "{table_name}" не существует.')
@@ -81,6 +64,8 @@ def drop_table(metadata, table_name):
     return metadata
 
 
+@log_time
+@handle_db_errors
 def insert_record(metadata, table_name, values, table_data):
     schema = metadata[table_name]
     cols = list(schema.keys())[1:]
@@ -90,13 +75,9 @@ def insert_record(metadata, table_name, values, table_data):
         return table_data
 
     parsed = {}
-    try:
-        for col, val in zip(cols, values):
-            col_type = schema[col]
-            parsed[col] = parse_value(val, col_type)
-    except ValueError as e:
-        print(f"Ошибка: {e}")
-        return table_data
+    for col, val in zip(cols, values):
+        col_type = schema[col]
+        parsed[col] = parse_value(val, col_type)
 
     new_id = (max((row["ID"] for row in table_data), default=0)) + 1
 
@@ -106,6 +87,8 @@ def insert_record(metadata, table_name, values, table_data):
     return table_data
 
 
+@log_time
+@handle_db_errors
 def filter_records(table_data, schema, col, raw_value):
     if col not in schema:
         raise ValueError(f"Столбец '{col}' не существует.")
@@ -115,6 +98,7 @@ def filter_records(table_data, schema, col, raw_value):
     return [row for row in table_data if row.get(col) == typed_value]
 
 
+@handle_db_errors
 def update_records(
     table_name, table_data, schema, set_col, set_raw, where_col, where_raw
 ):
@@ -145,6 +129,8 @@ def update_records(
     return table_data
 
 
+@confirm_action("удаление записи")
+@handle_db_errors
 def delete_records(table_name, table_data, schema, col, raw_value):
     if col not in schema:
         raise ValueError(f"Столбец '{col}' не существует.")

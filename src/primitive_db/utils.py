@@ -1,8 +1,7 @@
 import json
 import os
 
-BASE_DIR = os.path.join(os.path.dirname(__file__), "data")
-META_FILE = os.path.join(os.path.dirname(__file__), "db_meta.json")
+from .constants import BASE_DIR, META_FILE
 
 os.makedirs(BASE_DIR, exist_ok=True)
 

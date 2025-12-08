@@ -12,31 +12,9 @@ from .core import (
     print_table,
     update_records,
 )
+from .decorators import create_cacher
+from .parser import parse_set, parse_where
 from .utils import load_metadata, load_table_data, save_metadata, save_table_data
-
-
-def parse_where(args):
-    if len(args) != 3:
-        raise ValueError("Некорректное выражение WHERE.")
-
-    col, op, raw_value = args
-
-    if op != "=":
-        raise ValueError("Поддерживается только оператор '='.")
-
-    return col, raw_value
-
-
-def parse_set(args):
-    if len(args) != 3:
-        raise ValueError("Некорректное выражение SET.")
-
-    col, op, raw_value = args
-
-    if op != "=":
-        raise ValueError("Поддерживается только '='.")
-
-    return col, raw_value
 
 
 def print_help():
@@ -73,6 +51,7 @@ def print_help():
 def run():
     print("***База данных***\n")
     print_help()
+    cacher = create_cacher()
 
     while True:
         user_input = prompt.string(">>>Введите команду: ")
@@ -82,7 +61,7 @@ def run():
 
         try:
             args = shlex.split(user_input)
-        except:  # noqa: E722
+        except Exception:
             print("Некорректный ввод.")
             continue
 
@@ -171,21 +150,26 @@ def run():
             schema = metadata[table_name]
 
             if len(args) == 3:
-                print_table(table_name, schema, data)
-                continue
-
-            if args[3] != "where":
-                print("Некорректная команда.")
-                continue
-
-            col, raw_value = parse_where(args[4:])
-
-            try:
-                rows = filter_records(data, schema, col, raw_value)
+                key = (table_name, None)
+                rows = cacher(key, lambda: data)
                 print_table(table_name, schema, rows)
-            except ValueError as e:
-                print(f"Ошибка: {e}")
-            continue
+                continue
+
+            else:
+                if args[3] != "where":
+                    print("Некорректная команда.")
+                    continue
+
+                col, raw_value = parse_where(args[4:])
+                key = (table_name, col, raw_value)
+                try:
+                    rows = cacher(
+                        key, lambda: filter_records(data, schema, col, raw_value)
+                    )
+                    print_table(table_name, schema, rows)
+                except ValueError as e:
+                    print(f"Ошибка: {e}")
+                continue
 
         # UPDATE
 
