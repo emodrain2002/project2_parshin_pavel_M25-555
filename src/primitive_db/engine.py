@@ -18,37 +18,49 @@ from .utils import load_metadata, load_table_data, save_metadata, save_table_dat
 
 
 def print_help():
-    print("\n***Операции с данными***")
+    """Prints the help message for the current mode."""
+
+    print("Функции:")
+    print(
+        "<command> create_table <имя_таблицы> <столбец1:тип> <столбец2:тип> .. \
+- создать таблицу"
+    )
+    print("<command> list_tables - показать список всех таблиц")
+    print("<command> drop_table <имя_таблицы> - удалить таблицу")
+    print("<command> database - операции с таблицей")
+    
+    print("<command> exit - выход из программы")
+    print("<command> help - справочная информация\n")
+
+def print_db_help():
+    """Prints help for data operations"""
+    print("\n***Операции с данными***\n")
+
     print("Функции:")
     print(
         "<command> insert into <имя_таблицы> values (<значение1>, <значение2>, ...) \
-        - 'создать запись."
+- 'создать запись."
     )
     print(
         "<command> select from <имя_таблицы> where <столбец> = <значение> - \
-        прочитать записи по условию."
+прочитать записи по условию."
     )
     print("<command> select from <имя_таблицы> - прочитать все записи.")
     print(
         "<command> update <имя_таблицы> set <столбец1> = <новое_значение1> where \
-        <столбец_условия> = <значение_условия> - обновить запись."
+<столбец_условия> = <значение_условия> - обновить запись."
     )
     print(
         "<command> delete from <имя_таблицы> where <столбец> = <значение> - удалить \
-        запись."
+запись."
     )
     print("<command> info <имя_таблицы> - вывести информацию о таблице.")
-    print(
-        "<command> create_table <имя_таблицы> <столбец1:тип> <столбец2:тип> .. \
-        - создать таблицу"
-    )
-    print("<command> list_tables - показать список всех таблиц")
-    print("<command> drop_table <имя_таблицы> - удалить таблицу")
     print("<command> exit - выход из программы")
     print("<command> help - справочная информация\n")
 
 
 def run():
+    """Starts app cycle"""
     print("***База данных***\n")
     print_help()
     cacher = create_cacher()
@@ -79,6 +91,10 @@ def run():
             print_help()
             continue
 
+        if cmd == "database":
+            print_db_help()
+            continue
+
         # Таблицы
 
         if cmd == "create_table":
@@ -104,6 +120,7 @@ def run():
 
             meta = drop_table(metadata, args[1])
             save_metadata(meta)
+            cacher.invalidate()
             continue
 
         # INSERT
@@ -131,6 +148,7 @@ def run():
             data = load_table_data(table_name)
             new_data = insert_record(metadata, table_name, values, data)
             save_table_data(table_name, new_data)
+            cacher.invalidate()
             continue
 
         # SELECT
@@ -200,6 +218,7 @@ def run():
                     table_name, data, schema, set_col, set_raw, where_col, where_raw
                 )
                 save_table_data(table_name, new_data)
+                cacher.invalidate()
             except ValueError as e:
                 print(f"Ошибка: {e}")
             continue
@@ -228,6 +247,7 @@ def run():
                 col, raw_value = parse_where(args[4:])
                 new_data = delete_records(table_name, data, schema, col, raw_value)
                 save_table_data(table_name, new_data)
+                cacher.invalidate()
             except ValueError as e:
                 print(f"Ошибка: {e}")
             continue

@@ -10,6 +10,7 @@ from .utils import BASE_DIR
 
 @handle_db_errors
 def create_table(metadata, table_name, columns):
+    """Creates a new table."""
     if table_name in metadata:
         print(f'Ошибка: Таблица "{table_name}" уже существует.')
         return metadata
@@ -39,8 +40,8 @@ def create_table(metadata, table_name, columns):
 
 
 def list_tables(metadata):
+    """Prints all table names."""
     if not metadata:
-        print("Таблиц нет.")
         return
 
     for table in metadata:
@@ -50,6 +51,7 @@ def list_tables(metadata):
 @confirm_action("удаление таблицы")
 @handle_db_errors
 def drop_table(metadata, table_name):
+    """Deletes a table and its data file."""
     if table_name not in metadata:
         print(f'Ошибка: Таблица "{table_name}" не существует.')
         return metadata
@@ -67,6 +69,7 @@ def drop_table(metadata, table_name):
 @log_time
 @handle_db_errors
 def insert_record(metadata, table_name, values, table_data):
+    """Inserts new record into the table."""
     schema = metadata[table_name]
     cols = list(schema.keys())[1:]
 
@@ -90,6 +93,7 @@ def insert_record(metadata, table_name, values, table_data):
 @log_time
 @handle_db_errors
 def filter_records(table_data, schema, col, raw_value):
+    """Returns records that match the condition."""
     if col not in schema:
         raise ValueError(f"Столбец '{col}' не существует.")
 
@@ -102,6 +106,7 @@ def filter_records(table_data, schema, col, raw_value):
 def update_records(
     table_name, table_data, schema, set_col, set_raw, where_col, where_raw
 ):
+    """Updates records"""
     if set_col not in schema:
         raise ValueError(f"Столбец '{set_col}' не существует.")
     if where_col not in schema:
@@ -132,6 +137,7 @@ def update_records(
 @confirm_action("удаление записи")
 @handle_db_errors
 def delete_records(table_name, table_data, schema, col, raw_value):
+    """Deleting records"""
     if col not in schema:
         raise ValueError(f"Столбец '{col}' не существует.")
 
@@ -153,6 +159,7 @@ def delete_records(table_name, table_data, schema, col, raw_value):
 
 
 def print_table(table_name, schema, rows):
+    """Prints table rows in a formatted view."""
     table = PrettyTable()
     table.field_names = list(schema.keys())
 

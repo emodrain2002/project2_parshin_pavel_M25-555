@@ -1,4 +1,5 @@
 def parse_where(args):
+    """Parses a 'where' expression."""
     if len(args) != 3:
         raise ValueError("Некорректное выражение WHERE.")
 
@@ -11,6 +12,7 @@ def parse_where(args):
 
 
 def parse_set(args):
+    """Parses a 'set' expression."""
     if len(args) != 3:
         raise ValueError("Некорректное выражение SET.")
 
@@ -23,6 +25,7 @@ def parse_set(args):
 
 
 def parse_value(raw_value, expected_type):
+    """Converts raw value to the expected type"""
     value = raw_value.strip()
 
     if expected_type == "str":

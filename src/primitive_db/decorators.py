@@ -3,6 +3,7 @@ from functools import wraps
 
 
 def handle_db_errors(func):
+    """Handles database errors."""
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
@@ -23,6 +24,7 @@ def handle_db_errors(func):
 
 
 def confirm_action(action_name):
+    """Asks user to confirm the action."""
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -33,7 +35,7 @@ def confirm_action(action_name):
             )
             if confirm != "y":
                 print(f"Операция '{action_name}' отменена.")
-                return args[0] if "metadata" in func.__name__ else args[1]
+                return args[0]
             return func(*args, **kwargs)
 
         return wrapper
@@ -42,6 +44,7 @@ def confirm_action(action_name):
 
 
 def log_time(func):
+    """Logs execution time of the function."""
     @wraps(func)
     def wrapper(*args, **kwargs):
         start = time.monotonic()
@@ -54,14 +57,18 @@ def log_time(func):
 
 
 def create_cacher():
+    """Creates memory caching."""
     cache = {}
 
     def cache_result(key, value_func):
         if key in cache:
-            print("Результат взят из кэша.")
             return cache[key]
         result = value_func()
         cache[key] = result
         return result
 
+    def invalidate_cache():
+        cache.clear()
+
+    cache_result.invalidate = invalidate_cache
     return cache_result
